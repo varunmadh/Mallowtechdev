@@ -1,0 +1,39 @@
+# Use official Ruby image as base
+FROM ruby:3.2.2
+
+# Set environment variables
+ENV RAILS_ENV=production \
+    NODE_ENV=production \
+    BUNDLE_PATH=/gems
+
+# Install dependencies
+RUN apt-get update -qq && apt-get install -y \
+    build-essential \
+    libpq-dev \
+    nodejs \
+    yarn \
+    postgresql-client
+
+# Set workdir
+WORKDIR /app
+
+# Install bundler
+RUN gem install bundler
+
+# Copy Gemfile and Gemfile.lock first
+COPY Gemfile Gemfile.lock ./
+
+# Install gems
+RUN bundle install
+
+# Copy the entire app
+COPY . .
+
+# Precompile assets
+RUN bundle exec rake assets:precompile
+
+# Expose port (adjust if your app uses another port)
+EXPOSE 3000
+
+# Start the server
+CMD ["bundle", "exec", "puma", "-C", "config/puma.rb"]
